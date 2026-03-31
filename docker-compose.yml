@@ -1,0 +1,14 @@
+services:
+  claw:
+    build: .
+    container_name: claw
+    environment:
+      OPENCLAW_GATEWAY_BIND: lan
+    entrypoint: ["/entrypoint.sh"]
+    command: ["node", "openclaw.mjs", "gateway", "run", "--allow-unconfigured"]
+    restart: unless-stopped
+    ports:
+      - "18789:18789"
+    volumes:
+      - ./claw:/home/node/.openclaw
+      - ./claw/tmp:/tmp/openclaw
