@@ -2,6 +2,15 @@
 
 set -e
 
+if command -v podman > /dev/null 2>&1; then
+  COMPOSE="podman compose"
+elif command -v docker > /dev/null 2>&1; then
+  COMPOSE="docker compose"
+else
+  echo "Error: neither podman nor docker found. Please install one to continue."
+  exit 1
+fi
+
 CMD="$1"
 
 case "$CMD" in
@@ -21,11 +30,11 @@ case "$CMD" in
     echo "Generating config..."
     python3 scripts/config.py
     echo "Initializing..."
-    docker compose down claw
+    $COMPOSE down claw
     rm -rf claw
     mkdir -p claw
     cp openclaw.json claw/
-    docker compose up -d --build claw
+    $COMPOSE up -d --build claw
     ;;
   config)
     echo "Generating config..."
@@ -47,38 +56,38 @@ case "$CMD" in
     ;;
   log)
     echo "Showing logs..."
-    docker compose logs -f claw
+    $COMPOSE logs -f claw
     ;;
   start)
     echo "Starting..."
-    docker compose up -d claw
+    $COMPOSE up -d claw
     ;;
   stop)
     echo "Stopping..."
-    docker compose down claw
+    $COMPOSE down claw
     ;;
   restart)
     echo "Restarting..."
-    docker compose restart claw
+    $COMPOSE restart claw
     ;;
   build)
     echo "Generating config..."
     python3 scripts/config.py
     echo "Building..."
-    docker compose down claw
-    docker compose up -d --build claw
+    $COMPOSE down claw
+    $COMPOSE up -d --build claw
     ;;
   update)
     echo "Updating..."
-    docker compose down claw
-    docker compose up -d --build --pull always claw
+    $COMPOSE down claw
+    $COMPOSE up -d --build --pull always claw
     ;;
   run)
     shift
     echo "Running in container: $@"
     if [ "$#" -eq 3 ] && [ "$1" = "openclaw" ] && [ "$2" = "dashboard" ] && [ "$3" = "--no-open" ]; then
       tmpfile=$(mktemp)
-      if docker compose exec claw "$@" >"$tmpfile"; then
+      if $COMPOSE exec claw "$@" >"$tmpfile"; then
         status=0
       else
         status=$?
@@ -87,12 +96,12 @@ case "$CMD" in
       rm -f "$tmpfile"
       exit "$status"
     fi
-    docker compose exec claw "$@"
+    $COMPOSE exec claw "$@"
     ;;
   dashboard)
     echo "Showing dashboard..."
     tmpfile=$(mktemp)
-    if docker compose exec claw openclaw dashboard --no-open >"$tmpfile"; then
+    if $COMPOSE exec claw openclaw dashboard --no-open >"$tmpfile"; then
       status=0
     else
       status=$?
