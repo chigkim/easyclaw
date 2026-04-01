@@ -2,7 +2,9 @@
 
 set -e
 
-if command -v podman > /dev/null 2>&1; then
+if command -v podman-compose > /dev/null 2>&1; then
+  COMPOSE="podman-compose"
+elif command -v podman > /dev/null 2>&1; then
   COMPOSE="podman compose"
 elif command -v docker > /dev/null 2>&1; then
   COMPOSE="docker compose"
