@@ -40,18 +40,24 @@ def load_toml(path: Path) -> dict:
 def build_config(data: dict) -> dict:
     models = require(data, "models", "root")
     providers = require(models, "providers", "models")
-    oai = require(providers, "oai", "models.providers")
 
-    base_url = require_str(oai, "baseUrl", "models.providers.oai")
-    api_key = require_str(oai, "apiKey", "models.providers.oai")
+    if "ollama" in providers:
+        provider_type = "ollama"
+        provider = providers["ollama"]
+    else:
+        provider_type = "oai"
+        provider = require(providers, "oai", "models.providers")
 
-    raw_models = require(oai, "models", "models.providers.oai")
+    base_url = require_str(provider, "baseUrl", f"models.providers.{provider_type}")
+    api_key = require_str(provider, "apiKey", f"models.providers.{provider_type}")
+
+    raw_models = require(provider, "models", f"models.providers.{provider_type}")
     if not isinstance(raw_models, list) or not raw_models:
-        raise ValueError("Expected non-empty array at: models.providers.oai.models")
+        raise ValueError(f"Expected non-empty array at: models.providers.{provider_type}.models")
 
     first_model = raw_models[0]
     if not isinstance(first_model, dict):
-        raise ValueError("Expected object entries in: models.providers.oai.models")
+        raise ValueError(f"Expected object entries in: models.providers.{provider_type}.models")
 
     model_id = require_str(first_model, "id", "models.providers.oai.models[0]")
     model_name = require_str(first_model, "name", "models.providers.oai.models[0]")
@@ -72,16 +78,19 @@ def build_config(data: dict) -> dict:
 
     channels = require(data, "channels", "root")
     discord = require(channels, "discord", "channels")
+    discord_enabled = discord.get("enabled", True)
     token = require_str(discord, "token", "channels.discord")
     server_id = require_str(discord, "server_id", "channels.discord")
+
+    api_type = "ollama" if provider_type == "ollama" else "openai-responses"
 
     return {
         "models": {
             "providers": {
-                "oai": {
+                provider_type: {
                     "baseUrl": base_url,
                     "apiKey": api_key,
-                    "api": "openai-responses",
+                    "api": api_type,
                     "models": [
                         {
                             "id": model_id,
@@ -102,7 +111,7 @@ def build_config(data: dict) -> dict:
         "agents": {
             "defaults": {
                 "model": {
-                    "primary": f"oai/{model_name}",
+                    "primary": f"{provider_type}/{model_name}",
                 },
                 "compaction": {
                     "mode": "safeguard",
@@ -117,7 +126,7 @@ def build_config(data: dict) -> dict:
         },
         "channels": {
             "discord": {
-                "enabled": True,
+                "enabled": discord_enabled,
                 "token": token,
                 "groupPolicy": "open",
                 "commands": {
@@ -134,6 +143,9 @@ def build_config(data: dict) -> dict:
         "gateway": {
             "bind": "custom",
             "customBindHost": "0.0.0.0",
+            "controlUi": {
+                "allowedOrigins": ["*"],
+            },
         },
         "browser": {
             "enabled": True,

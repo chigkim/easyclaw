@@ -1,13 +1,28 @@
-[models.providers.oai]
-baseUrl = "http://localhost:11434/v1"
-apiKey = "api-key"
+# Option 1: Native Ollama provider (recommended for Ollama users)
+# Uses the native Ollama API which supports tool calling correctly.
+[models.providers.ollama]
+baseUrl = "http://localhost:11434"
+apiKey = "ollama-local"
 
-[[models.providers.oai.models]]
-id = "qwen3.5:35b-a3b-q8_0"
-name = "qwen3.5-35b"
+[[models.providers.ollama.models]]
+id = "qwen3:14b"
+name = "qwen3:14b"
 input = ["text", "image"]
 contextWindow = 32768
 maxTokens = 8192
+
+# Option 2: OpenAI-compatible provider (for OpenAI or other compatible APIs)
+# Note: Ollama's /v1 OpenAI-compatible endpoint does not support tool calling.
+# [models.providers.oai]
+# baseUrl = "https://api.openai.com/v1"
+# apiKey = "your-api-key"
+#
+# [[models.providers.oai.models]]
+# id = "gpt-4o"
+# name = "gpt-4o"
+# input = ["text", "image"]
+# contextWindow = 128000
+# maxTokens = 8192
 
 [agents.defaults]
 timeoutSeconds = 600
