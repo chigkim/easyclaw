@@ -74,6 +74,7 @@ def build_config(data: dict) -> dict:
     discord = require(channels, "discord", "channels")
     token = require_str(discord, "token", "channels.discord")
     server_id = require_str(discord, "server_id", "channels.discord")
+    approval_user_id = require_str(discord, "approval_user_id", "channels.discord")
 
     return {
         "models": {
@@ -113,13 +114,26 @@ def build_config(data: dict) -> dict:
                     "maxConcurrent": sub_max_concurrent,
                 },
                 "workspace": "/home/node/.openclaw/workspace",
+                "heartbeat": {
+                    "every": "30m",
+                    "target": "last",
+                    "activeHours": {
+                        "start": "00:00",
+                        "end": "24:00"
+                    },
+                },
             }
         },
         "channels": {
             "discord": {
                 "enabled": True,
                 "token": token,
-                "groupPolicy": "open",
+                "groupPolicy": "allowlist",
+                "execApprovals": {
+                    "enabled": True,
+                    "approvers": [approval_user_id],
+                    "target": "both",
+                },
                 "commands": {
                     "native": True,
                 },
@@ -158,6 +172,9 @@ def build_config(data: dict) -> dict:
                     "enabled": True,
                 }
             }
+        },
+        "cron": {
+            "enabled": True,
         },
     }
 

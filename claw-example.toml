@@ -19,3 +19,4 @@ maxConcurrent = 1
 [channels.discord]
 token = "DISCORD_BOT_TOKEN"
 server_id = "1234"
+approval_user_id = "YOUR_DISCORD_USER_ID"
