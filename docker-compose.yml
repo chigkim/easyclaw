@@ -2,8 +2,12 @@ services:
   claw:
     build: .
     container_name: claw
+    user: "root"
     environment:
       OPENCLAW_GATEWAY_BIND: lan
+      HOME: /home/node
+      USER: node
+      LOGNAME: node
     entrypoint: ["/entrypoint.sh"]
     command: ["node", "openclaw.mjs", "gateway", "run", "--allow-unconfigured"]
     restart: unless-stopped

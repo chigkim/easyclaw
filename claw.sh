@@ -75,10 +75,14 @@ case "$CMD" in
     ;;
   run)
     shift
+    if [ "$#" -eq 0 ]; then
+      echo "Usage: ./claw.sh run <command> [args...]"
+      exit 1
+    fi
     echo "Running in container: $@"
     if [ "$#" -eq 3 ] && [ "$1" = "openclaw" ] && [ "$2" = "dashboard" ] && [ "$3" = "--no-open" ]; then
       tmpfile=$(mktemp)
-      if docker compose exec claw "$@" >"$tmpfile"; then
+      if docker compose exec -u node claw "$@" >"$tmpfile"; then
         status=0
       else
         status=$?
@@ -87,12 +91,19 @@ case "$CMD" in
       rm -f "$tmpfile"
       exit "$status"
     fi
-    docker compose exec claw "$@"
+    if [ "$#" -eq 1 ]; then
+      case "$1" in
+        sh|bash|ash|zsh)
+          set -- "$1" -i
+          ;;
+      esac
+    fi
+    docker compose exec -u node claw "$@"
     ;;
   dashboard)
     echo "Showing dashboard..."
     tmpfile=$(mktemp)
-    if docker compose exec claw openclaw dashboard --no-open >"$tmpfile"; then
+    if docker compose exec -u node claw openclaw dashboard --no-open >"$tmpfile"; then
       status=0
     else
       status=$?
