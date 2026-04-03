@@ -64,7 +64,8 @@ def build_config(data: dict) -> dict:
 
     agents = require(data, "agents", "root")
     defaults = require(agents, "defaults", "agents")
-    timeout_seconds = require_int(defaults, "timeoutSeconds", "agents.defaults")
+    llm = require(defaults, "llm", "agents.defaults")
+    idle_timeout_seconds = require_int(llm, "idleTimeoutSeconds", "agents.defaults.llm")
     max_concurrent = require_int(defaults, "maxConcurrent", "agents.defaults")
 
     subagents = require(defaults, "subagents", "agents.defaults")
@@ -102,13 +103,15 @@ def build_config(data: dict) -> dict:
         },
         "agents": {
             "defaults": {
+                "llm": {
+                    "idleTimeoutSeconds": idle_timeout_seconds,
+                },
                 "model": {
                     "primary": f"oai/{model_name}",
                 },
                 "compaction": {
                     "mode": "safeguard",
                 },
-                "timeoutSeconds": timeout_seconds,
                 "maxConcurrent": max_concurrent,
                 "subagents": {
                     "maxConcurrent": sub_max_concurrent,

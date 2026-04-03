@@ -10,8 +10,10 @@ contextWindow = 32768
 maxTokens = 8192
 
 [agents.defaults]
-timeoutSeconds = 600
 maxConcurrent = 1
+
+[agents.defaults.llm]
+idleTimeoutSeconds = 600
 
 [agents.defaults.subagents]
 maxConcurrent = 1
