@@ -30,6 +30,11 @@ if [ "$(id -u)" -eq 0 ]; then
   chown "$NODE_UID:$NODE_GID" "$TZ_FILE"
 fi
 
+if [ "$(id -u)" -eq 0 ] && [ -f "/usr/share/zoneinfo/$TZ" ]; then
+  ln -snf "/usr/share/zoneinfo/$TZ" /etc/localtime
+  echo "$TZ" > /etc/timezone
+fi
+
 export TZ
 echo "Using timezone: $TZ"
 

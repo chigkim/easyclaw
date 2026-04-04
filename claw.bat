@@ -20,6 +20,7 @@ if errorlevel 1 (
 )
 
 set "COMPOSE_FILES=-f docker-compose.yml -f docker-compose.windows.yml"
+set "EXEC_ENV="
 
 if /I "%~1"=="init" goto :init
 if /I "%~1"=="config" goto :config
@@ -144,16 +145,18 @@ if "%RUN2%"=="" (
   if /I "%RUN1%"=="ash" call set ARGS=%%ARGS%% ^"-i^"
   if /I "%RUN1%"=="zsh" call set ARGS=%%ARGS%% ^"-i^"
 )
+call :set_exec_tz
 echo Running in container:%ARGS%
 if /I "%RUN1%"=="openclaw" if /I "%RUN2%"=="dashboard" if /I "%RUN3%"=="--no-open" if "%RUN4%"=="" goto :run_dashboard_no_open
-docker compose %COMPOSE_FILES% exec -u node claw%ARGS%
+docker compose %COMPOSE_FILES% exec %EXEC_ENV% -u node claw%ARGS%
 if errorlevel 1 goto :fail
 goto :success
 
 :dashboard
 echo Showing dashboard...
+call :set_exec_tz
 set "TMPFILE=%TEMP%\claw-dashboard-%RANDOM%%RANDOM%.txt"
-docker compose %COMPOSE_FILES% exec -u node claw openclaw dashboard --no-open > "%TMPFILE%"
+docker compose %COMPOSE_FILES% exec %EXEC_ENV% -u node claw openclaw dashboard --no-open > "%TMPFILE%"
 set "CMD_EXIT=%ERRORLEVEL%"
 powershell -NoProfile -Command "(Get-Content -LiteralPath '%TMPFILE%') -replace 'http://0\.0\.0\.0:', 'http://127.0.0.1:'"
 del "%TMPFILE%" >nul 2>nul
@@ -162,12 +165,20 @@ goto :success
 
 :run_dashboard_no_open
 set "TMPFILE=%TEMP%\claw-dashboard-%RANDOM%%RANDOM%.txt"
-docker compose %COMPOSE_FILES% exec -u node claw%ARGS% > "%TMPFILE%"
+docker compose %COMPOSE_FILES% exec %EXEC_ENV% -u node claw%ARGS% > "%TMPFILE%"
 set "CMD_EXIT=%ERRORLEVEL%"
 powershell -NoProfile -Command "(Get-Content -LiteralPath '%TMPFILE%') -replace 'http://0\.0\.0\.0:', 'http://127.0.0.1:'"
 del "%TMPFILE%" >nul 2>nul
 if not "%CMD_EXIT%"=="0" goto :fail
 goto :success
+
+:set_exec_tz
+set "EXEC_ENV="
+if exist claw\timezone (
+  set /p TZ_OVERRIDE=<claw\timezone
+  if defined TZ_OVERRIDE set "EXEC_ENV=-e TZ=!TZ_OVERRIDE!"
+)
+exit /b 0
 
 :run_usage
 echo Usage: claw run ^<command^> [args...]

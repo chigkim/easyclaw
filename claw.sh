@@ -2,6 +2,16 @@
 
 set -e
 
+compose_exec() {
+  if [ -f "claw/timezone" ]; then
+    TZ_OVERRIDE="$(cat claw/timezone)"
+    docker compose exec -e TZ="$TZ_OVERRIDE" "$@"
+    return
+  fi
+
+  docker compose exec "$@"
+}
+
 CMD="$1"
 
 case "$CMD" in
@@ -82,7 +92,7 @@ case "$CMD" in
     echo "Running in container: $@"
     if [ "$#" -eq 3 ] && [ "$1" = "openclaw" ] && [ "$2" = "dashboard" ] && [ "$3" = "--no-open" ]; then
       tmpfile=$(mktemp)
-      if docker compose exec -u node claw "$@" >"$tmpfile"; then
+      if compose_exec -u node claw "$@" >"$tmpfile"; then
         status=0
       else
         status=$?
@@ -98,12 +108,12 @@ case "$CMD" in
           ;;
       esac
     fi
-    docker compose exec -u node claw "$@"
+    compose_exec -u node claw "$@"
     ;;
   dashboard)
     echo "Showing dashboard..."
     tmpfile=$(mktemp)
-    if docker compose exec -u node claw openclaw dashboard --no-open >"$tmpfile"; then
+    if compose_exec -u node claw openclaw dashboard --no-open >"$tmpfile"; then
       status=0
     else
       status=$?
